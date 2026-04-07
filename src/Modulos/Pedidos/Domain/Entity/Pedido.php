@@ -5,6 +5,7 @@ namespace App\Modulos\Pedidos\Domain\Entity;
 use App\Modulos\Catalogos\Domain\Entity\NivelServicioEntrega;
 use App\Modulos\Catalogos\Domain\Entity\TipoCliente;
 use App\Modulos\Catalogos\Domain\Entity\TipoVehiculo;
+use App\Modulos\Decisiones\Domain\Entity\SnapshotTarificacionPedido;
 use App\Modulos\Pedidos\Domain\Enum\EstadoPedido;
 use App\Modulos\Pedidos\Infrastructure\Persistence\Doctrine\RepositorioPedido;
 use App\Shared\Domain\Model\TimestampableTrait;
@@ -66,6 +67,9 @@ class Pedido
 
     #[ORM\Column(nullable: true)]
     private ?int $margenCentimos = null;
+
+    #[ORM\OneToOne(mappedBy: 'pedido', targetEntity: SnapshotTarificacionPedido::class, cascade: ['persist'])]
+    private ?SnapshotTarificacionPedido $snapshotTarificacion = null;
 
     /** @var Collection<int, LineaPedido> */
     #[ORM\OneToMany(mappedBy: 'pedido', targetEntity: LineaPedido::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -224,6 +228,11 @@ class Pedido
         return $this->margenCentimos;
     }
 
+    public function getSnapshotTarificacion(): ?SnapshotTarificacionPedido
+    {
+        return $this->snapshotTarificacion;
+    }
+
     public function asignarDecisionEntrega(
         NivelServicioEntrega $nivelServicioEntrega,
         TipoVehiculo $tipoVehiculo,
@@ -236,6 +245,11 @@ class Pedido
         $this->precioClienteCentimos = max(0, $precioClienteCentimos);
         $this->costeLogisticoCentimos = max(0, $costeLogisticoCentimos);
         $this->margenCentimos = $margenCentimos;
+    }
+
+    public function asignarSnapshotTarificacion(SnapshotTarificacionPedido $snapshotTarificacionPedido): void
+    {
+        $this->snapshotTarificacion = $snapshotTarificacionPedido;
     }
 
     /** @return Collection<int, LineaPedido> */

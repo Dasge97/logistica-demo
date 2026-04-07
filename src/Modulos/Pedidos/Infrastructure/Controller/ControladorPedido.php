@@ -3,6 +3,7 @@
 namespace App\Modulos\Pedidos\Infrastructure\Controller;
 
 use App\Modulos\Catalogos\Domain\Entity\TipoCliente;
+use App\Modulos\Decisiones\Application\ServicioSnapshotPedido;
 use App\Modulos\Decisiones\Application\ResolutorOpcionesEntrega;
 use App\Modulos\Pedidos\Domain\Enum\EstadoPedido;
 use App\Modulos\Catalogos\Infrastructure\Persistence\Doctrine\RepositorioTipoCliente;
@@ -184,7 +185,7 @@ final class ControladorPedido extends AbstractController
     }
 
     #[Route('/{id}/confirmar/{servicioId}', name: 'app_pedidos_confirmar_servicio', methods: ['POST'])]
-    public function confirmarServicio(string $id, string $servicioId, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, ResolutorOpcionesEntrega $resolutorOpcionesEntrega): Response
+    public function confirmarServicio(string $id, string $servicioId, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, ResolutorOpcionesEntrega $resolutorOpcionesEntrega, ServicioSnapshotPedido $servicioSnapshotPedido): Response
     {
         $pedido = $this->buscarPedido($repositorioPedido, $id);
         if ($this->pedidoBloqueadoParaEdicion($pedido)) {
@@ -213,9 +214,10 @@ final class ControladorPedido extends AbstractController
                 $opcion->getMargenCentimos(),
             );
             $pedido->confirmar();
+            $servicioSnapshotPedido->crearSnapshot($pedido, $resultado, $opcion);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Servicio confirmado y pedido bloqueado para cambios operativos.');
+            $this->addFlash('success', 'Servicio confirmado, snapshot creado y pedido bloqueado para cambios operativos.');
 
             return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
         }

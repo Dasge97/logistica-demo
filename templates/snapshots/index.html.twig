@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Snapshots de pedidos | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Trazabilidad</p>
+                <h2>Snapshots de pedidos</h2>
+            </div>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Servicio</th>
+                    <th>Vehiculo</th>
+                    <th>Precio</th>
+                    <th>Margen</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for snapshot in snapshots %}
+                    <tr>
+                        <td>{{ snapshot.pedido.referencia }}</td>
+                        <td>{{ snapshot.nombreServicio }}</td>
+                        <td>{{ snapshot.nombreVehiculo }}</td>
+                        <td>{{ snapshot.precioClienteCentimos|dinero }}</td>
+                        <td>{{ snapshot.margenCentimos|dinero }}</td>
+                        <td><a href="{{ path('app_snapshots_pedido_mostrar', {id: snapshot.id}) }}">Ver detalle</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Todavia no hay snapshots registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

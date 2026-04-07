@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Snapshot {{ snapshot.pedido.referencia }} | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Snapshot</p>
+                <h2>{{ snapshot.pedido.referencia }}</h2>
+            </div>
+            <a href="{{ path('app_snapshots_pedido_index') }}">Volver</a>
+        </div>
+
+        <div class="resumen-grid">
+            <article>
+                <span>Servicio</span>
+                <strong>{{ snapshot.nombreServicio }}</strong>
+                <p>Vehiculo: {{ snapshot.nombreVehiculo }}</p>
+            </article>
+            <article>
+                <span>Importes</span>
+                <strong>{{ snapshot.precioClienteCentimos|dinero }}</strong>
+                <p>Coste: {{ snapshot.costeLogisticoCentimos|dinero }}</p>
+            </article>
+            <article>
+                <span>Margen</span>
+                <strong>{{ snapshot.margenCentimos|dinero }}</strong>
+                <p>Distancia: {{ snapshot.distanciaKm }} km</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="tarjeta espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Explicacion</p>
+                <h2>Decision congelada</h2>
+            </div>
+        </div>
+
+        <pre class="bloque-json">{{ snapshot.explicacionJson|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    </section>
+{% endblock %}

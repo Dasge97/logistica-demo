@@ -48,7 +48,12 @@
                 <article>
                     <span>Margen</span>
                     <strong>{{ pedido.margenCentimos|dinero }}</strong>
-                    <p>El pedido queda bloqueado tras confirmar.</p>
+                    <p>
+                        El pedido queda bloqueado tras confirmar.
+                        {% if pedido.snapshotTarificacion %}
+                            <a href="{{ path('app_snapshots_pedido_mostrar', {id: pedido.snapshotTarificacion.id}) }}">Ver snapshot</a>
+                        {% endif %}
+                    </p>
                 </article>
             </div>
         {% endif %}

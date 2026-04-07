@@ -423,6 +423,16 @@ a {
     color: #872d2d;
 }
 
+.bloque-json {
+    margin: 0;
+    padding: 18px;
+    overflow: auto;
+    border-radius: var(--radio-lg);
+    background: #162623;
+    color: #e7f1ef;
+    font-size: 0.92rem;
+}
+
 @media (max-width: 960px) {
     .aplicacion {
         grid-template-columns: 1fr;
