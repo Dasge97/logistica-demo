@@ -2,7 +2,9 @@
 
 namespace App\Modulos\Pedidos\Domain\Entity;
 
+use App\Modulos\Catalogos\Domain\Entity\NivelServicioEntrega;
 use App\Modulos\Catalogos\Domain\Entity\TipoCliente;
+use App\Modulos\Catalogos\Domain\Entity\TipoVehiculo;
 use App\Modulos\Pedidos\Domain\Enum\EstadoPedido;
 use App\Modulos\Pedidos\Infrastructure\Persistence\Doctrine\RepositorioPedido;
 use App\Shared\Domain\Model\TimestampableTrait;
@@ -47,6 +49,23 @@ class Pedido
 
     #[ORM\Column]
     private int $volumenTotalCm3 = 0;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?NivelServicioEntrega $servicioElegido = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?TipoVehiculo $vehiculoElegido = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $precioClienteCentimos = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $costeLogisticoCentimos = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $margenCentimos = null;
 
     /** @var Collection<int, LineaPedido> */
     #[ORM\OneToMany(mappedBy: 'pedido', targetEntity: LineaPedido::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -178,6 +197,45 @@ class Pedido
     {
         $this->pesoTotalGramos = max(0, $pesoTotalGramos);
         $this->volumenTotalCm3 = max(0, $volumenTotalCm3);
+    }
+
+    public function getServicioElegido(): ?NivelServicioEntrega
+    {
+        return $this->servicioElegido;
+    }
+
+    public function getVehiculoElegido(): ?TipoVehiculo
+    {
+        return $this->vehiculoElegido;
+    }
+
+    public function getPrecioClienteCentimos(): ?int
+    {
+        return $this->precioClienteCentimos;
+    }
+
+    public function getCosteLogisticoCentimos(): ?int
+    {
+        return $this->costeLogisticoCentimos;
+    }
+
+    public function getMargenCentimos(): ?int
+    {
+        return $this->margenCentimos;
+    }
+
+    public function asignarDecisionEntrega(
+        NivelServicioEntrega $nivelServicioEntrega,
+        TipoVehiculo $tipoVehiculo,
+        int $precioClienteCentimos,
+        int $costeLogisticoCentimos,
+        int $margenCentimos,
+    ): void {
+        $this->servicioElegido = $nivelServicioEntrega;
+        $this->vehiculoElegido = $tipoVehiculo;
+        $this->precioClienteCentimos = max(0, $precioClienteCentimos);
+        $this->costeLogisticoCentimos = max(0, $costeLogisticoCentimos);
+        $this->margenCentimos = $margenCentimos;
     }
 
     /** @return Collection<int, LineaPedido> */

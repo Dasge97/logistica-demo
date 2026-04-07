@@ -9,7 +9,9 @@
                 <p class="hero__eyebrow">Pedido</p>
                 <h2>{{ pedido.referencia }}</h2>
             </div>
-            <a class="boton-principal" href="{{ path('app_pedidos_editar', {id: pedido.id}) }}">Editar pedido</a>
+            {% if pedido.estado.value == 'borrador' %}
+                <a class="boton-principal" href="{{ path('app_pedidos_editar', {id: pedido.id}) }}">Editar pedido</a>
+            {% endif %}
         </div>
 
         <div class="resumen-grid">
@@ -30,6 +32,104 @@
                 <p>Volumen total: {{ pedido.volumenTotalCm3 }} cm3</p>
             </article>
         </div>
+
+        {% if pedido.servicioElegido and pedido.vehiculoElegido %}
+            <div class="resumen-grid espacio-superior">
+                <article>
+                    <span>Servicio confirmado</span>
+                    <strong>{{ pedido.servicioElegido.nombre }}</strong>
+                    <p>Vehiculo: {{ pedido.vehiculoElegido.nombre }}</p>
+                </article>
+                <article>
+                    <span>Importes</span>
+                    <strong>{{ pedido.precioClienteCentimos|dinero }}</strong>
+                    <p>Coste logistico: {{ pedido.costeLogisticoCentimos|dinero }}</p>
+                </article>
+                <article>
+                    <span>Margen</span>
+                    <strong>{{ pedido.margenCentimos|dinero }}</strong>
+                    <p>El pedido queda bloqueado tras confirmar.</p>
+                </article>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="tarjeta espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Decision de entrega</p>
+                <h2>Opciones disponibles</h2>
+            </div>
+        </div>
+
+        {% if resultadoEntrega.opciones is empty %}
+            <p>No hay opciones ofertables con la configuracion actual del pedido.</p>
+        {% else %}
+            <div class="simulador-opciones">
+                {% for opcion in resultadoEntrega.opciones %}
+                    <article class="simulador-opcion">
+                        <div class="simulador-opcion__cabecera">
+                            <strong>{{ opcion.nivelServicioEntrega.nombre }}</strong>
+                            <span>{{ opcion.precioClienteCentimos|dinero }}</span>
+                        </div>
+
+                        {% if opcion.vehiculoOptimo %}
+                            <p>
+                                Vehiculo optimo: <strong>{{ opcion.vehiculoOptimo.tipoVehiculo.nombre }}</strong>
+                                · Coste: {{ opcion.vehiculoOptimo.costeCentimos|dinero }}
+                                · Margen: {{ opcion.margenCentimos|dinero }}
+                            </p>
+                        {% endif %}
+
+                        <table class="tabla-operativa tabla-operativa--compacta">
+                            <thead>
+                                <tr>
+                                    <th>Vehiculo</th>
+                                    <th>Coste</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vehiculo in opcion.vehiculos %}
+                                    <tr>
+                                        <td>{{ vehiculo.tipoVehiculo.nombre }}</td>
+                                        <td>{{ vehiculo.costeCentimos|dinero }}</td>
+                                        <td>
+                                            {% if opcion.vehiculoOptimo and vehiculo.tipoVehiculo.id == opcion.vehiculoOptimo.tipoVehiculo.id %}
+                                                Recomendado
+                                            {% else %}
+                                                Compatible
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        {% if pedido.estado.value == 'borrador' and opcion.vehiculoOptimo %}
+                            <form method="post" action="{{ path('app_pedidos_confirmar_servicio', {id: pedido.id, servicioId: opcion.nivelServicioEntrega.id}) }}" class="espacio-superior">
+                                <input type="hidden" name="_token" value="{{ csrf_token('confirmar_servicio_' ~ pedido.id ~ '_' ~ opcion.nivelServicioEntrega.id) }}">
+                                <button type="submit" class="boton-principal">Confirmar este servicio</button>
+                            </form>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if resultadoEntrega.descartes is not empty %}
+            <div class="simulador-bloque espacio-superior">
+                <h3>Servicios descartados</h3>
+                <div class="simulador-descartes">
+                    {% for descarte in resultadoEntrega.descartes %}
+                        <article class="simulador-descarte">
+                            <strong>{{ descarte.nivelServicioEntrega.nombre }}</strong>
+                            <p>{{ descarte.motivo }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     </section>
 
     <section class="tarjeta espacio-superior">
@@ -62,11 +162,15 @@
                         <td>{{ linea.subtotalPesoGramos }} g</td>
                         <td>{{ linea.subtotalVolumenCm3 }} cm3</td>
                         <td class="acciones-linea">
-                            <a href="{{ path('app_pedidos_lineas_editar', {id: linea.id}) }}">Editar</a>
-                            <form method="post" action="{{ path('app_pedidos_lineas_eliminar', {id: linea.id}) }}">
-                                <input type="hidden" name="_token" value="{{ csrf_token('eliminar_linea_' ~ linea.id) }}">
-                                <button type="submit" class="boton-enlace">Eliminar</button>
-                            </form>
+                            {% if pedido.estado.value == 'borrador' %}
+                                <a href="{{ path('app_pedidos_lineas_editar', {id: linea.id}) }}">Editar</a>
+                                <form method="post" action="{{ path('app_pedidos_lineas_eliminar', {id: linea.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('eliminar_linea_' ~ linea.id) }}">
+                                    <button type="submit" class="boton-enlace">Eliminar</button>
+                                </form>
+                            {% else %}
+                                Bloqueado
+                            {% endif %}
                         </td>
                     </tr>
                 {% else %}
@@ -78,20 +182,22 @@
         </table>
     </section>
 
-    <section class="tarjeta formulario-admin espacio-superior">
-        <div class="cabecera-seccion">
-            <div>
-                <p class="hero__eyebrow">Nueva linea</p>
-                <h2>Anadir linea al pedido</h2>
+    {% if pedido.estado.value == 'borrador' %}
+        <section class="tarjeta formulario-admin espacio-superior">
+            <div class="cabecera-seccion">
+                <div>
+                    <p class="hero__eyebrow">Nueva linea</p>
+                    <h2>Anadir linea al pedido</h2>
+                </div>
             </div>
-        </div>
 
-        {{ form_start(formLinea, {attr: {class: 'formulario-grid'}}) }}
-            {{ form_row(formLinea.descripcion) }}
-            {{ form_row(formLinea.cantidad) }}
-            {{ form_row(formLinea.pesoUnitarioGramos) }}
-            {{ form_row(formLinea.volumenUnitarioCm3) }}
-            {{ form_row(formLinea.guardar, {attr: {class: 'boton-principal'}}) }}
-        {{ form_end(formLinea) }}
-    </section>
+            {{ form_start(formLinea, {attr: {class: 'formulario-grid'}}) }}
+                {{ form_row(formLinea.descripcion) }}
+                {{ form_row(formLinea.cantidad) }}
+                {{ form_row(formLinea.pesoUnitarioGramos) }}
+                {{ form_row(formLinea.volumenUnitarioCm3) }}
+                {{ form_row(formLinea.guardar, {attr: {class: 'boton-principal'}}) }}
+            {{ form_end(formLinea) }}
+        </section>
+    {% endif %}
 {% endblock %}

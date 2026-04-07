@@ -14,4 +14,18 @@ final class ResultadoOpcionEntrega
         public readonly ?ResultadoVehiculo $vehiculoOptimo,
     ) {
     }
+
+    public function getCosteOptimoCentimos(): ?int
+    {
+        return $this->vehiculoOptimo?->costeCentimos;
+    }
+
+    public function getMargenCentimos(): ?int
+    {
+        if (null === $this->vehiculoOptimo) {
+            return null;
+        }
+
+        return $this->precioClienteCentimos - $this->vehiculoOptimo->costeCentimos;
+    }
 }

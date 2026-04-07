@@ -3,6 +3,8 @@
 namespace App\Modulos\Pedidos\Infrastructure\Controller;
 
 use App\Modulos\Catalogos\Domain\Entity\TipoCliente;
+use App\Modulos\Decisiones\Application\ResolutorOpcionesEntrega;
+use App\Modulos\Pedidos\Domain\Enum\EstadoPedido;
 use App\Modulos\Catalogos\Infrastructure\Persistence\Doctrine\RepositorioTipoCliente;
 use App\Modulos\Pedidos\Application\CalculadoraMetricasPedido;
 use App\Modulos\Pedidos\Domain\Entity\LineaPedido;
@@ -12,7 +14,6 @@ use App\Modulos\Pedidos\Infrastructure\Persistence\Doctrine\RepositorioPedido;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -41,7 +42,6 @@ final class ControladorPedido extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->aplicarEstadoDesdeFormulario($pedido, (string) $form->get('estado')->getData());
             $entityManager->persist($pedido);
             $entityManager->flush();
 
@@ -57,15 +57,22 @@ final class ControladorPedido extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_pedidos_mostrar', methods: ['GET', 'POST'])]
-    public function mostrar(string $id, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido): Response
+    public function mostrar(string $id, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido, ResolutorOpcionesEntrega $resolutorOpcionesEntrega): Response
     {
         $pedido = $this->buscarPedido($repositorioPedido, $id);
+        $opcionesEntrega = $resolutorOpcionesEntrega->resolverParaPedido($pedido);
 
         $lineaPedido = new LineaPedido($pedido, '', 1, 0, 0);
         $formLinea = $this->crearFormularioLinea($lineaPedido);
         $formLinea->handleRequest($request);
 
         if ($formLinea->isSubmitted() && $formLinea->isValid()) {
+            if ($this->pedidoBloqueadoParaEdicion($pedido)) {
+                $this->addFlash('error', 'No se pueden anadir lineas a un pedido confirmado o cancelado.');
+
+                return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+            }
+
             $pedido->agregarLinea($lineaPedido);
             $calculadoraMetricasPedido->recalcular($pedido);
             $entityManager->persist($lineaPedido);
@@ -79,6 +86,7 @@ final class ControladorPedido extends AbstractController
         return $this->render('pedidos/show.html.twig', [
             'pedido' => $pedido,
             'formLinea' => $formLinea->createView(),
+            'resultadoEntrega' => $opcionesEntrega,
         ]);
     }
 
@@ -86,11 +94,16 @@ final class ControladorPedido extends AbstractController
     public function editar(string $id, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido): Response
     {
         $pedido = $this->buscarPedido($repositorioPedido, $id);
+        if ($this->pedidoBloqueadoParaEdicion($pedido)) {
+            $this->addFlash('error', 'No se puede editar un pedido confirmado o cancelado.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+        }
+
         $form = $this->crearFormularioPedido($pedido);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->aplicarEstadoDesdeFormulario($pedido, (string) $form->get('estado')->getData());
             $calculadoraMetricasPedido->recalcular($pedido);
             $entityManager->flush();
 
@@ -112,6 +125,12 @@ final class ControladorPedido extends AbstractController
         $lineaPedido = $repositorioLineaPedido->find(Uuid::fromString($id));
         if (!$lineaPedido instanceof LineaPedido) {
             throw $this->createNotFoundException('Linea de pedido no encontrada.');
+        }
+
+        if ($this->pedidoBloqueadoParaEdicion($lineaPedido->getPedido())) {
+            $this->addFlash('error', 'No se puede editar lineas de un pedido confirmado o cancelado.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $lineaPedido->getPedido()->getId()]);
         }
 
         $form = $this->crearFormularioLinea($lineaPedido);
@@ -142,6 +161,12 @@ final class ControladorPedido extends AbstractController
         }
 
         $pedido = $lineaPedido->getPedido();
+        if ($this->pedidoBloqueadoParaEdicion($pedido)) {
+            $this->addFlash('error', 'No se puede eliminar lineas de un pedido confirmado o cancelado.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $pedido->getId()]);
+        }
+
         if (!$this->isCsrfTokenValid('eliminar_linea_' . $id, (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'No se pudo validar la eliminacion de la linea.');
 
@@ -158,6 +183,48 @@ final class ControladorPedido extends AbstractController
         return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $pedido->getId()]);
     }
 
+    #[Route('/{id}/confirmar/{servicioId}', name: 'app_pedidos_confirmar_servicio', methods: ['POST'])]
+    public function confirmarServicio(string $id, string $servicioId, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, ResolutorOpcionesEntrega $resolutorOpcionesEntrega): Response
+    {
+        $pedido = $this->buscarPedido($repositorioPedido, $id);
+        if ($this->pedidoBloqueadoParaEdicion($pedido)) {
+            $this->addFlash('error', 'El pedido ya no admite cambios de servicio.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+        }
+
+        if (!$this->isCsrfTokenValid('confirmar_servicio_' . $id . '_' . $servicioId, (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'No se pudo validar la confirmacion del servicio.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+        }
+
+        $resultado = $resolutorOpcionesEntrega->resolverParaPedido($pedido);
+        foreach ($resultado->opciones as $opcion) {
+            if ((string) $opcion->nivelServicioEntrega->getId() !== $servicioId || null === $opcion->vehiculoOptimo || null === $opcion->getMargenCentimos()) {
+                continue;
+            }
+
+            $pedido->asignarDecisionEntrega(
+                $opcion->nivelServicioEntrega,
+                $opcion->vehiculoOptimo->tipoVehiculo,
+                $opcion->precioClienteCentimos,
+                $opcion->vehiculoOptimo->costeCentimos,
+                $opcion->getMargenCentimos(),
+            );
+            $pedido->confirmar();
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Servicio confirmado y pedido bloqueado para cambios operativos.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+        }
+
+        $this->addFlash('error', 'La opcion seleccionada ya no es valida para este pedido.');
+
+        return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+    }
+
     private function crearFormularioPedido(Pedido $pedido)
     {
         return $this->createFormBuilder($pedido)
@@ -171,16 +238,6 @@ final class ControladorPedido extends AbstractController
                 'query_builder' => static fn (RepositorioTipoCliente $repo) => $repo->createQueryBuilder('tipo')->orderBy('tipo.nombre', 'ASC'),
             ])
             ->add('distanciaKm', NumberType::class, ['label' => 'Distancia manual (km)', 'scale' => 2])
-            ->add('estado', ChoiceType::class, [
-                'label' => 'Estado',
-                'choices' => [
-                    'Borrador' => 'borrador',
-                    'Confirmado' => 'confirmado',
-                    'Cancelado' => 'cancelado',
-                ],
-                'mapped' => false,
-                'data' => $pedido->getEstado()->value,
-            ])
             ->add('guardar', SubmitType::class, ['label' => 'Guardar'])
             ->getForm();
     }
@@ -196,15 +253,6 @@ final class ControladorPedido extends AbstractController
             ->getForm();
     }
 
-    private function aplicarEstadoDesdeFormulario(Pedido $pedido, string $estado): void
-    {
-        match ($estado) {
-            'confirmado' => $pedido->confirmar(),
-            'cancelado' => $pedido->cancelar(),
-            default => $pedido->volverABorrador(),
-        };
-    }
-
     private function buscarPedido(RepositorioPedido $repositorioPedido, string $id): Pedido
     {
         $pedido = $repositorioPedido->find(Uuid::fromString($id));
@@ -213,5 +261,10 @@ final class ControladorPedido extends AbstractController
         }
 
         return $pedido;
+    }
+
+    private function pedidoBloqueadoParaEdicion(Pedido $pedido): bool
+    {
+        return in_array($pedido->getEstado(), [EstadoPedido::CONFIRMADO, EstadoPedido::CANCELADO], true);
     }
 }
