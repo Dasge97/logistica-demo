@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reglas de disponibilidad | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Operaciones</p>
+                <h2>Reglas de disponibilidad</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_reglas_disponibilidad_nueva') }}">Nueva regla</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Distancia maxima</th>
+                    <th>Peso maximo</th>
+                    <th>Volumen maximo</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for regla in reglas %}
+                    <tr>
+                        <td>{{ regla.nivelServicioEntrega.nombre }}</td>
+                        <td>{{ regla.distanciaMaximaKm }} km</td>
+                        <td>{{ regla.pesoMaximoGramos }} g</td>
+                        <td>{{ regla.volumenMaximoCm3 }} cm3</td>
+                        <td>{{ regla.activa ? 'Activa' : 'Inactiva' }}</td>
+                        <td><a href="{{ path('app_reglas_disponibilidad_editar', {id: regla.id}) }}">Editar</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Todavia no hay reglas de disponibilidad.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

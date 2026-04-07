@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Acceso | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="contenedor-publico hero">
+        <div class="hero__contenido">
+            <span class="hero__eyebrow">Motor logistico</span>
+            <h1 class="hero__titulo">Decisiones reales, tarifas coherentes y trazabilidad completa.</h1>
+            <p class="hero__texto">
+                Esta aplicacion centraliza la viabilidad de entrega, la tarificacion al cliente, el coste logistico y el snapshot inmutable de cada pedido confirmado.
+            </p>
+
+            <ul class="hero__lista">
+                <li>Servicios disponibles solo si son operativamente viables.</li>
+                <li>Panel editable para catalogos, reglas y tarifas.</li>
+                <li>Simulador visual para validar escenarios reales.</li>
+            </ul>
+        </div>
+
+        <div class="hero__panel">
+            <div class="tarjeta">
+                <h2>Accede al backoffice</h2>
+                <p>Usa tu cuenta administrativa para entrar al panel.</p>
+
+                {% if error %}
+                    <div class="error-formulario">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}
+
+                <form method="post" class="formulario-grid">
+                    <div class="campo">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" value="{{ ultimo_usuario }}" autocomplete="email" required autofocus>
+                    </div>
+
+                    <div class="campo">
+                        <label for="password">Contrasena</label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required>
+                    </div>
+
+                    <button class="boton-principal" type="submit">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,217 @@
+<?php
+
+namespace App\Modulos\Pedidos\Infrastructure\Controller;
+
+use App\Modulos\Catalogos\Domain\Entity\TipoCliente;
+use App\Modulos\Catalogos\Infrastructure\Persistence\Doctrine\RepositorioTipoCliente;
+use App\Modulos\Pedidos\Application\CalculadoraMetricasPedido;
+use App\Modulos\Pedidos\Domain\Entity\LineaPedido;
+use App\Modulos\Pedidos\Domain\Entity\Pedido;
+use App\Modulos\Pedidos\Infrastructure\Persistence\Doctrine\RepositorioLineaPedido;
+use App\Modulos\Pedidos\Infrastructure\Persistence\Doctrine\RepositorioPedido;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\Uuid;
+
+#[Route('/pedidos')]
+final class ControladorPedido extends AbstractController
+{
+    #[Route('', name: 'app_pedidos_index', methods: ['GET'])]
+    public function index(RepositorioPedido $repositorioPedido): Response
+    {
+        return $this->render('pedidos/index.html.twig', [
+            'pedidos' => $repositorioPedido->findBy([], ['createdAt' => 'DESC']),
+        ]);
+    }
+
+    #[Route('/nuevo', name: 'app_pedidos_nuevo', methods: ['GET', 'POST'])]
+    public function nuevo(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $pedido = new Pedido('PED-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6)), '', '');
+        $form = $this->crearFormularioPedido($pedido);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->aplicarEstadoDesdeFormulario($pedido, (string) $form->get('estado')->getData());
+            $entityManager->persist($pedido);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Pedido creado correctamente.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $pedido->getId()]);
+        }
+
+        return $this->render('pedidos/form.html.twig', [
+            'form' => $form->createView(),
+            'titulo' => 'Nuevo pedido',
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_pedidos_mostrar', methods: ['GET', 'POST'])]
+    public function mostrar(string $id, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido): Response
+    {
+        $pedido = $this->buscarPedido($repositorioPedido, $id);
+
+        $lineaPedido = new LineaPedido($pedido, '', 1, 0, 0);
+        $formLinea = $this->crearFormularioLinea($lineaPedido);
+        $formLinea->handleRequest($request);
+
+        if ($formLinea->isSubmitted() && $formLinea->isValid()) {
+            $pedido->agregarLinea($lineaPedido);
+            $calculadoraMetricasPedido->recalcular($pedido);
+            $entityManager->persist($lineaPedido);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Linea de pedido anadida correctamente.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+        }
+
+        return $this->render('pedidos/show.html.twig', [
+            'pedido' => $pedido,
+            'formLinea' => $formLinea->createView(),
+        ]);
+    }
+
+    #[Route('/{id}/editar', name: 'app_pedidos_editar', methods: ['GET', 'POST'])]
+    public function editar(string $id, Request $request, RepositorioPedido $repositorioPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido): Response
+    {
+        $pedido = $this->buscarPedido($repositorioPedido, $id);
+        $form = $this->crearFormularioPedido($pedido);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->aplicarEstadoDesdeFormulario($pedido, (string) $form->get('estado')->getData());
+            $calculadoraMetricasPedido->recalcular($pedido);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Pedido actualizado.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => $id]);
+        }
+
+        return $this->render('pedidos/form.html.twig', [
+            'form' => $form->createView(),
+            'titulo' => 'Editar pedido',
+            'pedido' => $pedido,
+        ]);
+    }
+
+    #[Route('/lineas/{id}/editar', name: 'app_pedidos_lineas_editar', methods: ['GET', 'POST'])]
+    public function editarLinea(string $id, Request $request, RepositorioLineaPedido $repositorioLineaPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido): Response
+    {
+        $lineaPedido = $repositorioLineaPedido->find(Uuid::fromString($id));
+        if (!$lineaPedido instanceof LineaPedido) {
+            throw $this->createNotFoundException('Linea de pedido no encontrada.');
+        }
+
+        $form = $this->crearFormularioLinea($lineaPedido);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $calculadoraMetricasPedido->recalcular($lineaPedido->getPedido());
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Linea de pedido actualizada.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $lineaPedido->getPedido()->getId()]);
+        }
+
+        return $this->render('pedidos/linea_form.html.twig', [
+            'form' => $form->createView(),
+            'pedido' => $lineaPedido->getPedido(),
+            'titulo' => 'Editar linea de pedido',
+        ]);
+    }
+
+    #[Route('/lineas/{id}/eliminar', name: 'app_pedidos_lineas_eliminar', methods: ['POST'])]
+    public function eliminarLinea(string $id, Request $request, RepositorioLineaPedido $repositorioLineaPedido, EntityManagerInterface $entityManager, CalculadoraMetricasPedido $calculadoraMetricasPedido): Response
+    {
+        $lineaPedido = $repositorioLineaPedido->find(Uuid::fromString($id));
+        if (!$lineaPedido instanceof LineaPedido) {
+            throw $this->createNotFoundException('Linea de pedido no encontrada.');
+        }
+
+        $pedido = $lineaPedido->getPedido();
+        if (!$this->isCsrfTokenValid('eliminar_linea_' . $id, (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'No se pudo validar la eliminacion de la linea.');
+
+            return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $pedido->getId()]);
+        }
+
+        $pedido->quitarLinea($lineaPedido);
+        $entityManager->remove($lineaPedido);
+        $calculadoraMetricasPedido->recalcular($pedido);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Linea de pedido eliminada.');
+
+        return $this->redirectToRoute('app_pedidos_mostrar', ['id' => (string) $pedido->getId()]);
+    }
+
+    private function crearFormularioPedido(Pedido $pedido)
+    {
+        return $this->createFormBuilder($pedido)
+            ->add('referencia', TextType::class, ['label' => 'Referencia'])
+            ->add('nombreCliente', TextType::class, ['label' => 'Nombre del cliente'])
+            ->add('telefonoCliente', TextType::class, ['label' => 'Telefono del cliente'])
+            ->add('tipoCliente', EntityType::class, [
+                'label' => 'Tipo de cliente',
+                'class' => TipoCliente::class,
+                'choice_label' => 'nombre',
+                'query_builder' => static fn (RepositorioTipoCliente $repo) => $repo->createQueryBuilder('tipo')->orderBy('tipo.nombre', 'ASC'),
+            ])
+            ->add('distanciaKm', NumberType::class, ['label' => 'Distancia manual (km)', 'scale' => 2])
+            ->add('estado', ChoiceType::class, [
+                'label' => 'Estado',
+                'choices' => [
+                    'Borrador' => 'borrador',
+                    'Confirmado' => 'confirmado',
+                    'Cancelado' => 'cancelado',
+                ],
+                'mapped' => false,
+                'data' => $pedido->getEstado()->value,
+            ])
+            ->add('guardar', SubmitType::class, ['label' => 'Guardar'])
+            ->getForm();
+    }
+
+    private function crearFormularioLinea(LineaPedido $lineaPedido)
+    {
+        return $this->createFormBuilder($lineaPedido)
+            ->add('descripcion', TextType::class, ['label' => 'Descripcion'])
+            ->add('cantidad', IntegerType::class, ['label' => 'Cantidad'])
+            ->add('pesoUnitarioGramos', IntegerType::class, ['label' => 'Peso unitario (g)'])
+            ->add('volumenUnitarioCm3', IntegerType::class, ['label' => 'Volumen unitario (cm3)'])
+            ->add('guardar', SubmitType::class, ['label' => 'Guardar linea'])
+            ->getForm();
+    }
+
+    private function aplicarEstadoDesdeFormulario(Pedido $pedido, string $estado): void
+    {
+        match ($estado) {
+            'confirmado' => $pedido->confirmar(),
+            'cancelado' => $pedido->cancelar(),
+            default => $pedido->volverABorrador(),
+        };
+    }
+
+    private function buscarPedido(RepositorioPedido $repositorioPedido, string $id): Pedido
+    {
+        $pedido = $repositorioPedido->find(Uuid::fromString($id));
+        if (!$pedido instanceof Pedido) {
+            throw $this->createNotFoundException('Pedido no encontrado.');
+        }
+
+        return $pedido;
+    }
+}

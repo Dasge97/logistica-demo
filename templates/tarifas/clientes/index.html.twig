@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tarifas cliente | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Tarifas</p>
+                <h2>Tarifas cliente</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_tarifas_cliente_nueva') }}">Nueva tarifa cliente</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Tipo cliente</th>
+                    <th>Servicio</th>
+                    <th>Tramo</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for regla in reglas %}
+                    <tr>
+                        <td>{{ regla.tipoCliente.nombre }}</td>
+                        <td>{{ regla.nivelServicioEntrega.nombre }}</td>
+                        <td>{{ regla.distanciaDesdeKm }} - {{ regla.distanciaHastaKm }} km</td>
+                        <td>{{ regla.precioClienteCentimos|dinero }}</td>
+                        <td>{{ regla.activa ? 'Activa' : 'Inactiva' }}</td>
+                        <td><a href="{{ path('app_tarifas_cliente_editar', {id: regla.id}) }}">Editar</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Todavia no hay tarifas cliente.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

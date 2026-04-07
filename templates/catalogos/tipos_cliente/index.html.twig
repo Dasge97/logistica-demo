@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tipos de cliente | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Catalogos</p>
+                <h2>Tipos de cliente</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_tipos_cliente_nuevo') }}">Nuevo tipo de cliente</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Codigo</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tipoCliente in tiposCliente %}
+                    <tr>
+                        <td>{{ tipoCliente.nombre }}</td>
+                        <td>{{ tipoCliente.codigo }}</td>
+                        <td>{{ tipoCliente.activo ? 'Activo' : 'Inactivo' }}</td>
+                        <td><a href="{{ path('app_tipos_cliente_editar', {id: tipoCliente.id}) }}">Editar</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4">Todavia no hay tipos de cliente.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

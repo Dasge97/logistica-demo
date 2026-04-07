@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pedido {{ pedido.referencia }} | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Pedido</p>
+                <h2>{{ pedido.referencia }}</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_pedidos_editar', {id: pedido.id}) }}">Editar pedido</a>
+        </div>
+
+        <div class="resumen-grid">
+            <article>
+                <span>Cliente</span>
+                <strong>{{ pedido.nombreCliente }}</strong>
+                <p>{{ pedido.telefonoCliente }} · {{ pedido.tipoCliente.nombre }}</p>
+            </article>
+            <article>
+                <span>Distancia</span>
+                <strong>{{ pedido.distanciaKm }} km</strong>
+                <p>Introducida manualmente para la v1.</p>
+            </article>
+            <article>
+                <span>Estado</span>
+                <strong>{{ pedido.estado.value|title }}</strong>
+                <p>Peso total: {{ (pedido.pesoTotalGramos / 1000)|number_format(2, ',', '.') }} kg</p>
+                <p>Volumen total: {{ pedido.volumenTotalCm3 }} cm3</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="tarjeta espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Carga del pedido</p>
+                <h2>Lineas</h2>
+            </div>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Descripcion</th>
+                    <th>Cantidad</th>
+                    <th>Peso unitario</th>
+                    <th>Volumen unitario</th>
+                    <th>Subtotal peso</th>
+                    <th>Subtotal volumen</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for linea in pedido.lineas %}
+                    <tr>
+                        <td>{{ linea.descripcion }}</td>
+                        <td>{{ linea.cantidad }}</td>
+                        <td>{{ linea.pesoUnitarioGramos }} g</td>
+                        <td>{{ linea.volumenUnitarioCm3 }} cm3</td>
+                        <td>{{ linea.subtotalPesoGramos }} g</td>
+                        <td>{{ linea.subtotalVolumenCm3 }} cm3</td>
+                        <td class="acciones-linea">
+                            <a href="{{ path('app_pedidos_lineas_editar', {id: linea.id}) }}">Editar</a>
+                            <form method="post" action="{{ path('app_pedidos_lineas_eliminar', {id: linea.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('eliminar_linea_' ~ linea.id) }}">
+                                <button type="submit" class="boton-enlace">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">Todavia no hay lineas en este pedido.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="tarjeta formulario-admin espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Nueva linea</p>
+                <h2>Anadir linea al pedido</h2>
+            </div>
+        </div>
+
+        {{ form_start(formLinea, {attr: {class: 'formulario-grid'}}) }}
+            {{ form_row(formLinea.descripcion) }}
+            {{ form_row(formLinea.cantidad) }}
+            {{ form_row(formLinea.pesoUnitarioGramos) }}
+            {{ form_row(formLinea.volumenUnitarioCm3) }}
+            {{ form_row(formLinea.guardar, {attr: {class: 'boton-principal'}}) }}
+        {{ form_end(formLinea) }}
+    </section>
+{% endblock %}

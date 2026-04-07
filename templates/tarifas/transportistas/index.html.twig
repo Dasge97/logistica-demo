@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tarifas transportista | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Tarifas</p>
+                <h2>Tarifas transportista</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_tarifas_transportista_nueva') }}">Nueva tarifa transportista</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Vehiculo</th>
+                    <th>Servicio</th>
+                    <th>Base</th>
+                    <th>Incluye</th>
+                    <th>Km extra</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for regla in reglas %}
+                    <tr>
+                        <td>{{ regla.tipoVehiculo.nombre }}</td>
+                        <td>{{ regla.nivelServicioEntrega.nombre }}</td>
+                        <td>{{ regla.precioBaseCentimos|dinero }}</td>
+                        <td>{{ regla.distanciaIncluidaKm }} km</td>
+                        <td>{{ regla.precioKmExtraCentimos|dinero }}</td>
+                        <td>{{ regla.activa ? 'Activa' : 'Inactiva' }}</td>
+                        <td><a href="{{ path('app_tarifas_transportista_editar', {id: regla.id}) }}">Editar</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">Todavia no hay tarifas transportista.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

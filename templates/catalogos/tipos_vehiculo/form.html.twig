@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ titulo }} | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta formulario-admin">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Catalogos</p>
+                <h2>{{ titulo }}</h2>
+            </div>
+            <a href="{{ path('app_tipos_vehiculo_index') }}">Volver</a>
+        </div>
+
+        {{ form_start(form, {attr: {class: 'formulario-grid'}}) }}
+            {{ form_row(form.nombre) }}
+            {{ form_row(form.codigo) }}
+            {{ form_row(form.pesoMaximoGramos) }}
+            {{ form_row(form.volumenMaximoCm3) }}
+            {{ form_row(form.activo) }}
+            {{ form_row(form.guardar, {attr: {class: 'boton-principal'}}) }}
+        {{ form_end(form) }}
+    </section>
+{% endblock %}

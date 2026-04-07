@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Niveles de servicio | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Catalogos</p>
+                <h2>Niveles de servicio</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_niveles_servicio_nuevo') }}">Nuevo nivel</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Codigo</th>
+                    <th>Orden</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for nivelServicio in nivelesServicio %}
+                    <tr>
+                        <td>{{ nivelServicio.nombre }}</td>
+                        <td>{{ nivelServicio.codigo }}</td>
+                        <td>{{ nivelServicio.ordenVisual }}</td>
+                        <td>{{ nivelServicio.activo ? 'Activo' : 'Inactivo' }}</td>
+                        <td><a href="{{ path('app_niveles_servicio_editar', {id: nivelServicio.id}) }}">Editar</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">Todavia no hay niveles de servicio.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

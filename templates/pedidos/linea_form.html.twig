@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ titulo }} | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta formulario-admin">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Pedido {{ pedido.referencia }}</p>
+                <h2>{{ titulo }}</h2>
+            </div>
+            <a href="{{ path('app_pedidos_mostrar', {id: pedido.id}) }}">Volver</a>
+        </div>
+
+        {{ form_start(form, {attr: {class: 'formulario-grid'}}) }}
+            {{ form_row(form.descripcion) }}
+            {{ form_row(form.cantidad) }}
+            {{ form_row(form.pesoUnitarioGramos) }}
+            {{ form_row(form.volumenUnitarioCm3) }}
+            {{ form_row(form.guardar, {attr: {class: 'boton-principal'}}) }}
+        {{ form_end(form) }}
+    </section>
+{% endblock %}

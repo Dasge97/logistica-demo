@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pedidos | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Operativa</p>
+                <h2>Pedidos</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_pedidos_nuevo') }}">Nuevo pedido</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Referencia</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Distancia</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                    <tr>
+                        <td>{{ pedido.referencia }}</td>
+                        <td>{{ pedido.nombreCliente }}</td>
+                        <td>{{ pedido.tipoCliente.nombre }}</td>
+                        <td>{{ pedido.distanciaKm }} km</td>
+                        <td>{{ pedido.estado.value|title }}</td>
+                        <td><a href="{{ path('app_pedidos_mostrar', {id: pedido.id}) }}">Ver detalle</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Todavia no hay pedidos.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}

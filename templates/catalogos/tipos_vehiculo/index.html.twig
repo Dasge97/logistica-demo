@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tipos de vehiculo | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Catalogos</p>
+                <h2>Tipos de vehiculo</h2>
+            </div>
+            <a class="boton-principal" href="{{ path('app_tipos_vehiculo_nuevo') }}">Nuevo vehiculo</a>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Codigo</th>
+                    <th>Peso maximo</th>
+                    <th>Volumen maximo</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tipoVehiculo in tiposVehiculo %}
+                    <tr>
+                        <td>{{ tipoVehiculo.nombre }}</td>
+                        <td>{{ tipoVehiculo.codigo }}</td>
+                        <td>{{ tipoVehiculo.pesoMaximoGramos }} g</td>
+                        <td>{{ tipoVehiculo.volumenMaximoCm3 }} cm3</td>
+                        <td>{{ tipoVehiculo.activo ? 'Activo' : 'Inactivo' }}</td>
+                        <td><a href="{{ path('app_tipos_vehiculo_editar', {id: tipoVehiculo.id}) }}">Editar</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6">Todavia no hay tipos de vehiculo.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+{% endblock %}
