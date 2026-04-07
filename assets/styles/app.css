@@ -369,6 +369,29 @@ a {
     margin-bottom: 12px;
 }
 
+.accesos-rapidos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.acceso-rapido {
+    display: grid;
+    gap: 8px;
+    padding: 20px;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--color-borde);
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.acceso-rapido strong {
+    font-size: 1.04rem;
+}
+
+.acceso-rapido span {
+    color: rgba(17, 33, 31, 0.72);
+}
+
 .acciones-linea {
     display: flex;
     gap: 10px;
@@ -451,6 +474,10 @@ a {
     }
 
     .simulador-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .accesos-rapidos-grid {
         grid-template-columns: 1fr;
     }
 }

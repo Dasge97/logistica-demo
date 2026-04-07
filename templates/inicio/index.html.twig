@@ -5,27 +5,127 @@
 {% block body %}
     <section class="tarjeta">
         <p class="hero__eyebrow">Vista general</p>
-        <h2>Base operativa lista para seguir construyendo la v1</h2>
+        <h2>Panel operativo del motor logistico</h2>
         <p class="hero__texto">
-            La aplicacion ya tiene una base tecnica estable, autenticacion inicial, layout operativo y navegacion preparada para empezar a construir catalogos, pedidos, reglas y simulador.
+            El sistema ya permite configurar catalogos, reglas comerciales y operativas, simular escenarios y confirmar pedidos con snapshot inmutable.
         </p>
 
         <div class="resumen-grid">
             <article>
-                <span>Estado</span>
-                <strong>Tarea 2</strong>
-                <p>Seguridad y estructura visual base en marcha.</p>
+                <span>Pedidos</span>
+                <strong>{{ metricas.pedidos }}</strong>
+                <p>Pedidos creados en el entorno actual.</p>
             </article>
             <article>
-                <span>Siguiente paso</span>
-                <strong>Catalogos</strong>
-                <p>Tipos de cliente, niveles de servicio y vehiculos.</p>
+                <span>Snapshots</span>
+                <strong>{{ metricas.snapshots }}</strong>
+                <p>Decisiones congeladas y auditables.</p>
             </article>
             <article>
-                <span>Objetivo</span>
-                <strong>V1 desplegable</strong>
-                <p>Monolito Symfony con backoffice y simulador editable.</p>
+                <span>Configuracion</span>
+                <strong>{{ metricas.tiposCliente + metricas.nivelesServicio + metricas.tiposVehiculo }}</strong>
+                <p>Catalogos activos entre clientes, servicios y vehiculos.</p>
             </article>
         </div>
+    </section>
+
+    <section class="tarjeta espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Accesos rapidos</p>
+                <h2>Operaciones frecuentes</h2>
+            </div>
+        </div>
+
+        <div class="accesos-rapidos-grid">
+            <a class="acceso-rapido" href="{{ path('app_pedidos_nuevo') }}">
+                <strong>Nuevo pedido</strong>
+                <span>Registrar un pedido manual y preparar su resolucion.</span>
+            </a>
+            <a class="acceso-rapido" href="{{ path('app_simulador_logistico') }}">
+                <strong>Simular escenario</strong>
+                <span>Probar viabilidad, precios, costes y margenes.</span>
+            </a>
+            <a class="acceso-rapido" href="{{ path('app_reglas_disponibilidad_index') }}">
+                <strong>Reglas operativas</strong>
+                <span>Ajustar disponibilidad por servicio, peso y volumen.</span>
+            </a>
+            <a class="acceso-rapido" href="{{ path('app_snapshots_pedido_index') }}">
+                <strong>Revisar snapshots</strong>
+                <span>Consultar las decisiones ya confirmadas.</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="tarjeta espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Actividad reciente</p>
+                <h2>Ultimos pedidos</h2>
+            </div>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Referencia</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Servicio</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in ultimosPedidos %}
+                    <tr>
+                        <td>{{ pedido.referencia }}</td>
+                        <td>{{ pedido.nombreCliente }}</td>
+                        <td>{{ pedido.estado.value|title }}</td>
+                        <td>{{ pedido.servicioElegido ? pedido.servicioElegido.nombre : 'Pendiente' }}</td>
+                        <td><a href="{{ path('app_pedidos_mostrar', {id: pedido.id}) }}">Abrir</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">Todavia no hay pedidos registrados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="tarjeta espacio-superior">
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Auditoria</p>
+                <h2>Ultimos snapshots</h2>
+            </div>
+        </div>
+
+        <table class="tabla-operativa">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Servicio</th>
+                    <th>Vehiculo</th>
+                    <th>Margen</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for snapshot in ultimosSnapshots %}
+                    <tr>
+                        <td>{{ snapshot.pedido.referencia }}</td>
+                        <td>{{ snapshot.nombreServicio }}</td>
+                        <td>{{ snapshot.nombreVehiculo }}</td>
+                        <td>{{ snapshot.margenCentimos|dinero }}</td>
+                        <td><a href="{{ path('app_snapshots_pedido_mostrar', {id: snapshot.id}) }}">Ver</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5">Todavia no hay snapshots confirmados.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </section>
 {% endblock %}
