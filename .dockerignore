@@ -1,0 +1,7 @@
+.git
+.phpunit.cache
+var
+vendor
+node_modules
+public/assets
+tests
