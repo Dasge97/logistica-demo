@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Simulador logistico | Logistica y Tarifas{% endblock %}
+
+{% block body %}
+    <section class="tarjeta simulador-layout">
+        <div>
+            <div class="cabecera-seccion">
+                <div>
+                    <p class="hero__eyebrow">Simulador</p>
+                    <h2>Probar decision logistica</h2>
+                </div>
+            </div>
+
+            <p class="hero__texto simulador-texto">
+                Introduce un escenario de pedido y visualiza solo las opciones realmente ejecutables, con precio cliente, coste logistico, margen y motivo de descarte cuando aplique.
+            </p>
+
+            {{ form_start(form, {attr: {class: 'formulario-grid'}}) }}
+                {{ form_row(form.tipoCliente) }}
+                {{ form_row(form.distanciaKm) }}
+                {{ form_row(form.pesoTotalGramos) }}
+                {{ form_row(form.volumenTotalCm3) }}
+                {{ form_row(form.simular, {attr: {class: 'boton-principal'}}) }}
+            {{ form_end(form) }}
+        </div>
+
+        <div class="simulador-panel-resultados">
+            <h3>Lectura del escenario</h3>
+
+            {% if resultado is null %}
+                <p class="simulador-vacio">Completa el formulario y ejecuta una simulacion para ver resultados.</p>
+            {% else %}
+                <div class="simulador-bloque">
+                    <h4>Servicios ofertables</h4>
+                    {% if resultado.opciones is empty %}
+                        <p>No hay servicios viables con la configuracion actual.</p>
+                    {% else %}
+                        <div class="simulador-opciones">
+                            {% for opcion in resultado.opciones %}
+                                <article class="simulador-opcion">
+                                    <div class="simulador-opcion__cabecera">
+                                        <strong>{{ opcion.nivelServicioEntrega.nombre }}</strong>
+                                        <span>{{ opcion.precioClienteCentimos|dinero }}</span>
+                                    </div>
+
+                                    {% if opcion.vehiculoOptimo %}
+                                        <p>
+                                            Vehiculo optimo: <strong>{{ opcion.vehiculoOptimo.tipoVehiculo.nombre }}</strong>
+                                            · Coste: {{ opcion.vehiculoOptimo.costeCentimos|dinero }}
+                                            · Margen: {{ (opcion.precioClienteCentimos - opcion.vehiculoOptimo.costeCentimos)|dinero }}
+                                        </p>
+                                    {% endif %}
+
+                                    <table class="tabla-operativa tabla-operativa--compacta">
+                                        <thead>
+                                            <tr>
+                                                <th>Vehiculo</th>
+                                                <th>Coste</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for vehiculo in opcion.vehiculos %}
+                                                <tr>
+                                                    <td>{{ vehiculo.tipoVehiculo.nombre }}</td>
+                                                    <td>{{ vehiculo.costeCentimos|dinero }}</td>
+                                                    <td>
+                                                        {% if opcion.vehiculoOptimo and vehiculo.tipoVehiculo.id == opcion.vehiculoOptimo.tipoVehiculo.id %}
+                                                            Recomendado
+                                                        {% else %}
+                                                            Compatible
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="simulador-bloque espacio-superior">
+                    <h4>Servicios descartados</h4>
+                    {% if resultado.descartes is empty %}
+                        <p>No hay descartes para este escenario.</p>
+                    {% else %}
+                        <div class="simulador-descartes">
+                            {% for descarte in resultado.descartes %}
+                                <article class="simulador-descarte">
+                                    <strong>{{ descarte.nivelServicioEntrega.nombre }}</strong>
+                                    <p>{{ descarte.motivo }}</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
