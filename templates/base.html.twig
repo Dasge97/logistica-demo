@@ -30,16 +30,34 @@
                     </div>
 
                     <nav class="navegacion-principal" aria-label="Principal">
-                        <a href="{{ path('app_inicio') }}">Inicio</a>
-                        <a href="{{ path('app_pedidos_index') }}">Pedidos</a>
-                        <a href="{{ path('app_simulador_logistico') }}">Simulador logistico</a>
-                        <a href="{{ path('app_tipos_cliente_index') }}">Tipos de cliente</a>
-                        <a href="{{ path('app_niveles_servicio_index') }}">Niveles de servicio</a>
-                        <a href="{{ path('app_tipos_vehiculo_index') }}">Tipos de vehiculo</a>
-                        <a href="{{ path('app_reglas_disponibilidad_index') }}">Reglas de disponibilidad</a>
-                        <a href="{{ path('app_tarifas_cliente_index') }}">Tarifas cliente</a>
-                        <a href="{{ path('app_tarifas_transportista_index') }}">Tarifas transportista</a>
-                        <a href="{{ path('app_snapshots_pedido_index') }}">Snapshots</a>
+                        <a href="{{ path('app_inicio') }}" class="item-menu-principal {{ app.request.attributes.get('_route') == 'app_inicio' ? 'activo' : '' }}">Inicio</a>
+
+                        <div class="item-menu-desplegable {{ app.request.attributes.get('_route') starts with 'app_pedidos_' or app.request.attributes.get('_route') == 'app_simulador_logistico' or app.request.attributes.get('_route') starts with 'app_snapshots_' ? 'activo' : '' }}">
+                            <button type="button" class="item-menu-desplegable__trigger">Operacion</button>
+                            <div class="submenu-lateral">
+                                <a href="{{ path('app_pedidos_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_pedidos_' ? 'activo' : '' }}">Pedidos</a>
+                                <a href="{{ path('app_simulador_logistico') }}" class="{{ app.request.attributes.get('_route') == 'app_simulador_logistico' ? 'activo' : '' }}">Simulador</a>
+                                <a href="{{ path('app_snapshots_pedido_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_snapshots_' ? 'activo' : '' }}">Snapshots</a>
+                            </div>
+                        </div>
+
+                        <div class="item-menu-desplegable {{ app.request.attributes.get('_route') starts with 'app_tipos_cliente_' or app.request.attributes.get('_route') starts with 'app_niveles_servicio_' or app.request.attributes.get('_route') starts with 'app_tipos_vehiculo_' ? 'activo' : '' }}">
+                            <button type="button" class="item-menu-desplegable__trigger">Catalogos</button>
+                            <div class="submenu-lateral">
+                                <a href="{{ path('app_tipos_cliente_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_tipos_cliente_' ? 'activo' : '' }}">Tipos de cliente</a>
+                                <a href="{{ path('app_niveles_servicio_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_niveles_servicio_' ? 'activo' : '' }}">Servicios</a>
+                                <a href="{{ path('app_tipos_vehiculo_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_tipos_vehiculo_' ? 'activo' : '' }}">Vehiculos</a>
+                            </div>
+                        </div>
+
+                        <div class="item-menu-desplegable {{ app.request.attributes.get('_route') starts with 'app_reglas_disponibilidad_' or app.request.attributes.get('_route') starts with 'app_tarifas_cliente_' or app.request.attributes.get('_route') starts with 'app_tarifas_transportista_' ? 'activo' : '' }}">
+                            <button type="button" class="item-menu-desplegable__trigger">Reglas</button>
+                            <div class="submenu-lateral">
+                                <a href="{{ path('app_reglas_disponibilidad_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_reglas_disponibilidad_' ? 'activo' : '' }}">Disponibilidad</a>
+                                <a href="{{ path('app_tarifas_cliente_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_tarifas_cliente_' ? 'activo' : '' }}">Tarifas cliente</a>
+                                <a href="{{ path('app_tarifas_transportista_index') }}" class="{{ app.request.attributes.get('_route') starts with 'app_tarifas_transportista_' ? 'activo' : '' }}">Tarifas transporte</a>
+                            </div>
+                        </div>
                     </nav>
 
                     <div class="panel-usuario">
@@ -51,6 +69,19 @@
             {% endif %}
 
             <main class="contenido-principal{% if not app.user %} contenido-principal--publico{% endif %}">
+                {% if app.user %}
+                    <header class="cabecera-pagina-global">
+                        <div>
+                            <p class="cabecera-pagina-global__eyebrow">Backoffice</p>
+                            <h2 class="cabecera-pagina-global__titulo">{{ block('title')|replace({' | Logistica y Tarifas': ''}) }}</h2>
+                        </div>
+                        <div class="cabecera-pagina-global__acciones">
+                            <a class="boton-secundario" href="{{ path('app_pedidos_nuevo') }}">Nuevo pedido</a>
+                            <a class="boton-principal" href="{{ path('app_simulador_logistico') }}">Abrir simulador</a>
+                        </div>
+                    </header>
+                {% endif %}
+
                 {% for label, messages in app.flashes %}
                     {% for message in messages %}
                         <div class="flash flash--{{ label }}">{{ message }}</div>

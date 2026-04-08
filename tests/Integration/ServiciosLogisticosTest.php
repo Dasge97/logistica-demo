@@ -54,7 +54,7 @@ final class ServiciosLogisticosTest extends KernelDatabaseTestCase
         [$tipoCliente, $express, $moto] = $this->crearCatalogosBaseCompletos();
 
         $this->entityManager->persist(new ReglaTarifaCliente($tipoCliente, $express, 0, 5, 1400));
-        $this->entityManager->persist(new ReglaTarifaTransportista($moto, $express, 850, 6, 100));
+        $this->entityManager->persist(new ReglaTarifaTransportista($moto, $express, 0, 5, 0, 25000, 0, 120000, 850, 6, 100));
         $this->entityManager->flush();
 
         $tarificacion = new ServicioTarificacionCliente(
@@ -65,8 +65,8 @@ final class ServiciosLogisticosTest extends KernelDatabaseTestCase
         );
 
         Assert::assertSame(1400, $tarificacion->resolverPrecioCentimos($tipoCliente, $express, 3));
-        Assert::assertSame(850, $coste->calcularCosteCentimos($moto, $express, 3));
-        Assert::assertSame(950, $coste->calcularCosteCentimos($moto, $express, 7));
+        Assert::assertSame(850, $coste->resolverMejorCoste($moto, $express, 3, 4000, 12000)?->costeCentimos);
+        Assert::assertNull($coste->resolverMejorCoste($moto, $express, 7, 4000, 12000));
     }
 
     public function testResuelveOpcionesYEligeVehiculoOptimo(): void
@@ -75,8 +75,8 @@ final class ServiciosLogisticosTest extends KernelDatabaseTestCase
 
         $this->entityManager->persist(new ReglaDisponibilidadServicio($express, 5, 30000, 150000));
         $this->entityManager->persist(new ReglaTarifaCliente($tipoCliente, $express, 0, 5, 1400));
-        $this->entityManager->persist(new ReglaTarifaTransportista($moto, $express, 850, 6, 100));
-        $this->entityManager->persist(new ReglaTarifaTransportista($coche, $express, 1200, 10, 120));
+        $this->entityManager->persist(new ReglaTarifaTransportista($moto, $express, 0, 5, 0, 25000, 0, 120000, 850, 6, 100));
+        $this->entityManager->persist(new ReglaTarifaTransportista($coche, $express, 0, 5, 0, 120000, 0, 900000, 1200, 10, 120));
         $this->entityManager->flush();
 
         $pedido = new Pedido('TEST-RESOLVER', 'Cliente Resolver', '600000002', $tipoCliente);

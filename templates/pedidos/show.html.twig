@@ -8,6 +8,11 @@
             <div>
                 <p class="hero__eyebrow">Pedido</p>
                 <h2>{{ pedido.referencia }}</h2>
+                <div class="chips-linea">
+                    <span class="chip chip--neutro">{{ pedido.estado.value|title }}</span>
+                    <span class="chip chip--suave">{{ pedido.tipoCliente.nombre }}</span>
+                    <span class="chip chip--suave">{{ pedido.distanciaKm }} km</span>
+                </div>
             </div>
             {% if pedido.estado.value == 'borrador' %}
                 <a class="boton-principal" href="{{ path('app_pedidos_editar', {id: pedido.id}) }}">Editar pedido</a>
@@ -41,14 +46,15 @@
                     <p>Vehiculo: {{ pedido.vehiculoElegido.nombre }}</p>
                 </article>
                 <article>
-                    <span>Importes</span>
+                    <span>Cliente pagaria</span>
                     <strong>{{ pedido.precioClienteCentimos|dinero }}</strong>
-                    <p>Coste logistico: {{ pedido.costeLogisticoCentimos|dinero }}</p>
+                    <p>Importe final visible para el cliente.</p>
                 </article>
                 <article>
-                    <span>Margen</span>
-                    <strong>{{ pedido.margenCentimos|dinero }}</strong>
+                    <span>Ejecucion</span>
+                    <strong>{{ pedido.vehiculoElegido.nombre }}</strong>
                     <p>
+                        Coste interno: {{ pedido.costeLogisticoCentimos|dinero }}.
                         El pedido queda bloqueado tras confirmar.
                         {% if pedido.snapshotTarificacion %}
                             <a href="{{ path('app_snapshots_pedido_mostrar', {id: pedido.snapshotTarificacion.id}) }}">Ver snapshot</a>
@@ -64,6 +70,7 @@
             <div>
                 <p class="hero__eyebrow">Decision de entrega</p>
                 <h2>Opciones disponibles</h2>
+                <p class="seccion-subtexto">Aqui ves primero lo que realmente puede ofrecerse al cliente y despues lo que queda descartado.</p>
             </div>
         </div>
 
@@ -81,8 +88,8 @@
                         {% if opcion.vehiculoOptimo %}
                             <p>
                                 Vehiculo optimo: <strong>{{ opcion.vehiculoOptimo.tipoVehiculo.nombre }}</strong>
-                                · Coste: {{ opcion.vehiculoOptimo.costeCentimos|dinero }}
-                                · Margen: {{ opcion.margenCentimos|dinero }}
+                                · Cliente paga: {{ opcion.precioClienteCentimos|dinero }}
+                                · Coste interno: {{ opcion.vehiculoOptimo.costeCentimos|dinero }}
                             </p>
                         {% endif %}
 
@@ -142,6 +149,7 @@
             <div>
                 <p class="hero__eyebrow">Carga del pedido</p>
                 <h2>Lineas</h2>
+                <p class="seccion-subtexto">Estas lineas determinan el peso y el volumen total usados por el motor logistico.</p>
             </div>
         </div>
 

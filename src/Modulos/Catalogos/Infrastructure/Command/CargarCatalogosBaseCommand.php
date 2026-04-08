@@ -105,10 +105,10 @@ final class CargarCatalogosBaseCommand extends Command
             $express = $this->repositorioNivelServicioEntrega->findOneBy(['codigo' => 'EXPRESS']);
 
             if ($moto instanceof TipoVehiculo && $express instanceof NivelServicioEntrega) {
-                $this->entityManager->persist(new ReglaTarifaTransportista($moto, $express, 850, 6, 100));
+                $this->entityManager->persist(new ReglaTarifaTransportista($moto, $express, 0, 5, 0, 25000, 0, 120000, 850, 6, 100));
             }
             if ($coche instanceof TipoVehiculo && $express instanceof NivelServicioEntrega) {
-                $this->entityManager->persist(new ReglaTarifaTransportista($coche, $express, 1200, 10, 120));
+                $this->entityManager->persist(new ReglaTarifaTransportista($coche, $express, 0, 5, 0, 120000, 0, 900000, 1200, 10, 120));
             }
         }
 

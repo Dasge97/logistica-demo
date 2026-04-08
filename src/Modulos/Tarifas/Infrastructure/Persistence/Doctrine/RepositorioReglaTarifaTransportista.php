@@ -18,12 +18,24 @@ final class RepositorioReglaTarifaTransportista extends ServiceEntityRepository
         parent::__construct($registry, ReglaTarifaTransportista::class);
     }
 
-    public function buscarActiva(TipoVehiculo $tipoVehiculo, NivelServicioEntrega $nivelServicioEntrega): ?ReglaTarifaTransportista
+    /** @return list<ReglaTarifaTransportista> */
+    public function buscarAplicables(
+        TipoVehiculo $tipoVehiculo,
+        NivelServicioEntrega $nivelServicioEntrega,
+        float $distanciaKm,
+        int $pesoTotalGramos,
+        int $volumenTotalCm3,
+    ): array
     {
-        return $this->findOneBy([
+        $reglas = $this->findBy([
             'tipoVehiculo' => $tipoVehiculo,
             'nivelServicioEntrega' => $nivelServicioEntrega,
             'activa' => true,
-        ]);
+        ], ['createdAt' => 'ASC']);
+
+        return array_values(array_filter(
+            $reglas,
+            static fn (ReglaTarifaTransportista $regla): bool => $regla->aplicaA($distanciaKm, $pesoTotalGramos, $volumenTotalCm3),
+        ));
     }
 }

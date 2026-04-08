@@ -17,6 +17,9 @@
                 <tr>
                     <th>Vehiculo</th>
                     <th>Servicio</th>
+                    <th>Rango distancia</th>
+                    <th>Rango peso</th>
+                    <th>Rango volumen</th>
                     <th>Base</th>
                     <th>Incluye</th>
                     <th>Km extra</th>
@@ -29,6 +32,9 @@
                     <tr>
                         <td>{{ regla.tipoVehiculo.nombre }}</td>
                         <td>{{ regla.nivelServicioEntrega.nombre }}</td>
+                        <td>{{ regla.distanciaMinimaKm }} - {{ regla.distanciaMaximaKm }} km</td>
+                        <td>{{ regla.pesoMinimoGramos }} - {{ regla.pesoMaximoGramos }} g</td>
+                        <td>{{ regla.volumenMinimoCm3 }} - {{ regla.volumenMaximoCm3 }} cm3</td>
                         <td>{{ regla.precioBaseCentimos|dinero }}</td>
                         <td>{{ regla.distanciaIncluidaKm }} km</td>
                         <td>{{ regla.precioKmExtraCentimos|dinero }}</td>
@@ -37,7 +43,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="7">Todavia no hay tarifas transportista.</td>
+                        <td colspan="10">Todavia no hay tarifas transportista.</td>
                     </tr>
                 {% endfor %}
             </tbody>

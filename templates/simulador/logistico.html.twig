@@ -3,101 +3,214 @@
 {% block title %}Simulador logistico | Logistica y Tarifas{% endblock %}
 
 {% block body %}
-    <section class="tarjeta simulador-layout">
-        <div>
-            <div class="cabecera-seccion">
-                <div>
-                    <p class="hero__eyebrow">Simulador</p>
-                    <h2>Probar decision logistica</h2>
-                </div>
+    <section class="tarjeta" {% if resultado %}data-controller="simulador"{% endif %}>
+        <div class="cabecera-seccion">
+            <div>
+                <p class="hero__eyebrow">Simulador</p>
+                <h2>Simular una contratacion real</h2>
+                <p class="seccion-subtexto">La lectura va por pasos: paquete, servicio, vehiculo y cierre. El snapshot queda debajo como resultado final.</p>
             </div>
-
-            <p class="hero__texto simulador-texto">
-                Introduce un escenario de pedido y visualiza solo las opciones realmente ejecutables, con precio cliente, coste logistico, margen y motivo de descarte cuando aplique.
-            </p>
-
-            {{ form_start(form, {attr: {class: 'formulario-grid'}}) }}
-                {{ form_row(form.tipoCliente) }}
-                {{ form_row(form.distanciaKm) }}
-                {{ form_row(form.pesoTotalGramos) }}
-                {{ form_row(form.volumenTotalCm3) }}
-                {{ form_row(form.simular, {attr: {class: 'boton-principal'}}) }}
-            {{ form_end(form) }}
         </div>
 
-        <div class="simulador-panel-resultados">
-            <h3>Lectura del escenario</h3>
+        <div class="simulador-pasos simulador-pasos--compactos">
+            <span class="simulador-paso simulador-paso--activo">Paso 1</span>
+            <span class="simulador-paso {{ resultado ? 'simulador-paso--activo' : '' }}">Paso 2</span>
+            <span class="simulador-paso {{ resultado ? 'simulador-paso--activo' : '' }}">Paso 3</span>
+            <span class="simulador-paso {{ resultado ? 'simulador-paso--activo' : '' }}">Paso 4</span>
+        </div>
 
-            {% if resultado is null %}
-                <p class="simulador-vacio">Completa el formulario y ejecuta una simulacion para ver resultados.</p>
-            {% else %}
-                <div class="simulador-bloque">
-                    <h4>Servicios ofertables</h4>
-                    {% if resultado.opciones is empty %}
-                        <p>No hay servicios viables con la configuracion actual.</p>
-                    {% else %}
-                        <div class="simulador-opciones">
-                            {% for opcion in resultado.opciones %}
-                                <article class="simulador-opcion">
-                                    <div class="simulador-opcion__cabecera">
-                                        <strong>{{ opcion.nivelServicioEntrega.nombre }}</strong>
-                                        <span>{{ opcion.precioClienteCentimos|dinero }}</span>
+        {% if resultado %}
+            <section class="simulador-estado-actual">
+                <div class="simulador-estado-actual__item">
+                    <span>Cliente</span>
+                    <strong>{{ datos.tipoCliente.nombre }}</strong>
+                </div>
+                <div class="simulador-estado-actual__item">
+                    <span>Distancia</span>
+                    <strong>{{ datos.distanciaKm }} km</strong>
+                </div>
+                <div class="simulador-estado-actual__item">
+                    <span>Peso</span>
+                    <strong>{{ datos.pesoTotalGramos }} g</strong>
+                </div>
+                <div class="simulador-estado-actual__item">
+                    <span>Volumen</span>
+                    <strong>{{ datos.volumenTotalCm3 }} cm3</strong>
+                </div>
+            </section>
+        {% endif %}
+
+        <div class="simulador-secuencia-grid simulador-secuencia-grid--dos-por-dos">
+            <section class="simulador-columna simulador-columna--paquete">
+                <div class="simulador-columna__cabecera">
+                    <span class="simulador-columna__paso">Paso 1</span>
+                    <h3>Paquete</h3>
+                    <p>Define la entrada del motor: cliente, distancia, peso y volumen.</p>
+                </div>
+
+                <div class="simulador-form-wrap">
+                    {{ form_start(form, {attr: {class: 'formulario-grid'}}) }}
+                        {{ form_row(form.tipoCliente) }}
+                        {{ form_row(form.distanciaKm) }}
+                        {{ form_row(form.pesoTotalGramos) }}
+                        {{ form_row(form.volumenTotalCm3) }}
+                        {{ form_row(form.simular, {attr: {class: 'boton-principal'}}) }}
+                    {{ form_end(form) }}
+                </div>
+            </section>
+
+            <section class="simulador-columna">
+                <div class="simulador-columna__cabecera">
+                    <span class="simulador-columna__paso">Paso 2</span>
+                    <h3>Servicio</h3>
+                    <p>El importe grande es el precio final que veria el cliente.</p>
+                </div>
+
+                {% if resultado is null %}
+                    <p class="simulador-vacio">Primero define el paquete para obtener servicios disponibles.</p>
+                {% elseif resultado.opciones is empty %}
+                    <p class="simulador-vacio">No hay servicios ofertables con esta configuracion.</p>
+                {% else %}
+                    <div class="simulador-servicios-grid simulador-servicios-grid--compactas">
+                        {% for opcion in resultado.opciones %}
+                            <article
+                                class="simulador-servicio-card simulador-servicio-card--fila"
+                                data-simulador-target="serviceCard"
+                                data-service-id="{{ opcion.nivelServicioEntrega.id }}"
+                                data-service-name="{{ opcion.nivelServicioEntrega.nombre }}"
+                                data-service-price="{{ opcion.precioClienteCentimos|dinero }}"
+                            >
+                                <div class="simulador-servicio-card__contenido">
+                                    <span class="simulador-servicio-card__etiqueta">Servicio</span>
+                                    <strong>{{ opcion.nivelServicioEntrega.nombre }}</strong>
+                                    <p class="simulador-servicio-card__precio simulador-servicio-card__precio--mini">{{ opcion.precioClienteCentimos|dinero }}</p>
+                                </div>
+                                <button type="button" class="boton-discreto" data-action="click->simulador#selectService" data-service-id="{{ opcion.nivelServicioEntrega.id }}">Elegir</button>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="simulador-columna">
+                <div class="simulador-columna__cabecera">
+                    <span class="simulador-columna__paso">Paso 3</span>
+                    <h3>Vehiculo</h3>
+                    <p>Estas son las opciones evaluadas. El sistema elige automaticamente la mas conveniente para la empresa.</p>
+                </div>
+
+                {% if resultado is null or resultado.opciones is empty %}
+                    <p class="simulador-vacio">Cuando haya un servicio disponible, aqui veras los vehiculos posibles.</p>
+                {% else %}
+                    <div class="simulador-vehiculos-grid simulador-vehiculos-grid--compactas">
+                        {% for opcion in resultado.opciones %}
+                            {% for vehiculo in opcion.vehiculos %}
+                                <article
+                                    class="simulador-vehiculo-card simulador-vehiculo-card--fila"
+                                    data-simulador-target="vehicleCard"
+                                    data-service-id="{{ opcion.nivelServicioEntrega.id }}"
+                                    data-vehicle-id="{{ vehiculo.tipoVehiculo.id }}"
+                                    data-vehicle-name="{{ vehiculo.tipoVehiculo.nombre }}"
+                                    data-vehicle-cost="{{ vehiculo.costeCentimos|dinero }}"
+                                    data-recommended="{{ opcion.vehiculoOptimo and vehiculo.tipoVehiculo.id == opcion.vehiculoOptimo.tipoVehiculo.id ? '1' : '0' }}"
+                                    hidden
+                                >
+                                    <div class="simulador-servicio-card__contenido">
+                                        <span class="simulador-servicio-card__etiqueta">Vehiculo</span>
+                                        <strong>{{ vehiculo.tipoVehiculo.nombre }}</strong>
+                                        <p class="simulador-vehiculo-card__texto">Coste interno: {{ vehiculo.costeCentimos|dinero }}</p>
+                                        <p class="simulador-vehiculo-card__texto simulador-vehiculo-card__texto--suave">El cliente seguiria pagando {{ opcion.precioClienteCentimos|dinero }}.</p>
+                                        {% if opcion.vehiculoOptimo and vehiculo.tipoVehiculo.id == opcion.vehiculoOptimo.tipoVehiculo.id %}
+                                            <span class="chip chip--neutro">Seleccionado automaticamente</span>
+                                        {% else %}
+                                            <span class="chip chip--suave">Barajado para la decision</span>
+                                        {% endif %}
                                     </div>
-
-                                    {% if opcion.vehiculoOptimo %}
-                                        <p>
-                                            Vehiculo optimo: <strong>{{ opcion.vehiculoOptimo.tipoVehiculo.nombre }}</strong>
-                                            · Coste: {{ opcion.vehiculoOptimo.costeCentimos|dinero }}
-                                            · Margen: {{ (opcion.precioClienteCentimos - opcion.vehiculoOptimo.costeCentimos)|dinero }}
-                                        </p>
-                                    {% endif %}
-
-                                    <table class="tabla-operativa tabla-operativa--compacta">
-                                        <thead>
-                                            <tr>
-                                                <th>Vehiculo</th>
-                                                <th>Coste</th>
-                                                <th>Estado</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for vehiculo in opcion.vehiculos %}
-                                                <tr>
-                                                    <td>{{ vehiculo.tipoVehiculo.nombre }}</td>
-                                                    <td>{{ vehiculo.costeCentimos|dinero }}</td>
-                                                    <td>
-                                                        {% if opcion.vehiculoOptimo and vehiculo.tipoVehiculo.id == opcion.vehiculoOptimo.tipoVehiculo.id %}
-                                                            Recomendado
-                                                        {% else %}
-                                                            Compatible
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
                                 </article>
                             {% endfor %}
-                        </div>
-                    {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="simulador-columna">
+                <div class="simulador-columna__cabecera">
+                    <span class="simulador-columna__paso">Paso 4</span>
+                    <h3>Cierre</h3>
+                    <p>Resumen automatico con el vehiculo elegido por el sistema.</p>
                 </div>
 
-                <div class="simulador-bloque espacio-superior">
-                    <h4>Servicios descartados</h4>
-                    {% if resultado.descartes is empty %}
-                        <p>No hay descartes para este escenario.</p>
-                    {% else %}
-                        <div class="simulador-descartes">
-                            {% for descarte in resultado.descartes %}
-                                <article class="simulador-descarte">
-                                    <strong>{{ descarte.nivelServicioEntrega.nombre }}</strong>
-                                    <p>{{ descarte.motivo }}</p>
-                                </article>
-                            {% endfor %}
+                {% if resultado is null or resultado.opciones is empty %}
+                    <p class="simulador-vacio">Aqui aparecera el resumen final de la eleccion.</p>
+                {% else %}
+                    <article class="simulador-cierre-card">
+                        <div data-simulador-target="closureEmpty">
+                            <p class="simulador-vacio">Elige un servicio para que el sistema cierre automaticamente la simulacion.</p>
                         </div>
-                    {% endif %}
-                </div>
-            {% endif %}
+                        <div data-simulador-target="closureDetails" hidden>
+                            <span class="simulador-servicio-card__etiqueta">Cliente pagaria</span>
+                            <p class="simulador-servicio-card__precio simulador-servicio-card__precio--mini" data-simulador-target="closurePrice"></p>
+                            <p class="simulador-vehiculo-card__texto">Servicio: <strong data-simulador-target="closureService"></strong></p>
+                            <hr class="simulador-separador">
+                            <p class="simulador-vehiculo-card__texto">Vehiculo: <strong data-simulador-target="closureVehicle"></strong></p>
+                            <p class="simulador-vehiculo-card__texto">Coste interno: <span data-simulador-target="closureCost"></span></p>
+                        </div>
+                    </article>
+                {% endif %}
+            </section>
         </div>
+
+        {% if resultado %}
+            <section class="simulador-bloque espacio-superior simulador-bloque--final">
+                <div class="simulador-bloque__cabecera">
+                    <h4>Snapshot simulado final</h4>
+                    <p>Asi quedaria congelada la decision final del pedido al confirmar.</p>
+                </div>
+
+                <div data-simulador-target="snapshotEmpty">
+                    <p class="simulador-vacio">El snapshot aparecera aqui cuando ya hayas elegido un servicio y un vehiculo.</p>
+                </div>
+
+                <div data-simulador-target="snapshotDetails" hidden>
+                    <div class="resumen-grid resumen-grid--compacto resumen-grid--triple">
+                        <article>
+                            <span>Cliente pagaria</span>
+                            <strong data-simulador-target="snapshotPrice"></strong>
+                            <p>Servicio: <span data-simulador-target="snapshotService"></span></p>
+                        </article>
+                        <article>
+                            <span>Vehiculo asignado</span>
+                            <strong data-simulador-target="snapshotVehicle"></strong>
+                            <p>Coste interno: <span data-simulador-target="snapshotCost"></span></p>
+                        </article>
+                        <article>
+                            <span>Condiciones</span>
+                            <strong data-simulador-target="snapshotDistance">{{ datos.distanciaKm }} km</strong>
+                            <p data-simulador-target="snapshotPackage">{{ datos.pesoTotalGramos }} g · {{ datos.volumenTotalCm3 }} cm3</p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="simulador-bloque espacio-superior">
+                <div class="simulador-bloque__cabecera">
+                    <h4>Servicios descartados</h4>
+                    <p>Lo que no aparece como oferta aqui no deberia mostrarse al cliente.</p>
+                </div>
+
+                {% if resultado.descartes is empty %}
+                    <p>No hay descartes para este escenario.</p>
+                {% else %}
+                    <div class="simulador-descartes">
+                        {% for descarte in resultado.descartes %}
+                            <article class="simulador-descarte">
+                                <strong>{{ descarte.nivelServicioEntrega.nombre }}</strong>
+                                <p>{{ descarte.motivo }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
     </section>
 {% endblock %}

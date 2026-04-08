@@ -29,6 +29,24 @@ class ReglaTarifaTransportista
     private ?NivelServicioEntrega $nivelServicioEntrega;
 
     #[ORM\Column]
+    private float $distanciaMinimaKm;
+
+    #[ORM\Column]
+    private float $distanciaMaximaKm;
+
+    #[ORM\Column]
+    private int $pesoMinimoGramos;
+
+    #[ORM\Column]
+    private int $pesoMaximoGramos;
+
+    #[ORM\Column]
+    private int $volumenMinimoCm3;
+
+    #[ORM\Column]
+    private int $volumenMaximoCm3;
+
+    #[ORM\Column]
     private int $precioBaseCentimos;
 
     #[ORM\Column]
@@ -40,11 +58,29 @@ class ReglaTarifaTransportista
     #[ORM\Column(options: ['default' => true])]
     private bool $activa = true;
 
-    public function __construct(?TipoVehiculo $tipoVehiculo, ?NivelServicioEntrega $nivelServicioEntrega, int $precioBaseCentimos, float $distanciaIncluidaKm, int $precioKmExtraCentimos)
+    public function __construct(
+        ?TipoVehiculo $tipoVehiculo,
+        ?NivelServicioEntrega $nivelServicioEntrega,
+        float $distanciaMinimaKm,
+        float $distanciaMaximaKm,
+        int $pesoMinimoGramos,
+        int $pesoMaximoGramos,
+        int $volumenMinimoCm3,
+        int $volumenMaximoCm3,
+        int $precioBaseCentimos,
+        float $distanciaIncluidaKm,
+        int $precioKmExtraCentimos,
+    )
     {
         $this->id = new UuidV7();
         $this->tipoVehiculo = $tipoVehiculo;
         $this->nivelServicioEntrega = $nivelServicioEntrega;
+        $this->setDistanciaMinimaKm($distanciaMinimaKm);
+        $this->setDistanciaMaximaKm($distanciaMaximaKm);
+        $this->setPesoMinimoGramos($pesoMinimoGramos);
+        $this->setPesoMaximoGramos($pesoMaximoGramos);
+        $this->setVolumenMinimoCm3($volumenMinimoCm3);
+        $this->setVolumenMaximoCm3($volumenMaximoCm3);
         $this->setPrecioBaseCentimos($precioBaseCentimos);
         $this->setDistanciaIncluidaKm($distanciaIncluidaKm);
         $this->setPrecioKmExtraCentimos($precioKmExtraCentimos);
@@ -90,6 +126,66 @@ class ReglaTarifaTransportista
         return $this->precioBaseCentimos;
     }
 
+    public function getDistanciaMinimaKm(): float
+    {
+        return $this->distanciaMinimaKm;
+    }
+
+    public function setDistanciaMinimaKm(float $distanciaMinimaKm): void
+    {
+        $this->distanciaMinimaKm = max(0, $distanciaMinimaKm);
+    }
+
+    public function getDistanciaMaximaKm(): float
+    {
+        return $this->distanciaMaximaKm;
+    }
+
+    public function setDistanciaMaximaKm(float $distanciaMaximaKm): void
+    {
+        $this->distanciaMaximaKm = max($this->distanciaMinimaKm, $distanciaMaximaKm);
+    }
+
+    public function getPesoMinimoGramos(): int
+    {
+        return $this->pesoMinimoGramos;
+    }
+
+    public function setPesoMinimoGramos(int $pesoMinimoGramos): void
+    {
+        $this->pesoMinimoGramos = max(0, $pesoMinimoGramos);
+    }
+
+    public function getPesoMaximoGramos(): int
+    {
+        return $this->pesoMaximoGramos;
+    }
+
+    public function setPesoMaximoGramos(int $pesoMaximoGramos): void
+    {
+        $this->pesoMaximoGramos = max($this->pesoMinimoGramos, $pesoMaximoGramos);
+    }
+
+    public function getVolumenMinimoCm3(): int
+    {
+        return $this->volumenMinimoCm3;
+    }
+
+    public function setVolumenMinimoCm3(int $volumenMinimoCm3): void
+    {
+        $this->volumenMinimoCm3 = max(0, $volumenMinimoCm3);
+    }
+
+    public function getVolumenMaximoCm3(): int
+    {
+        return $this->volumenMaximoCm3;
+    }
+
+    public function setVolumenMaximoCm3(int $volumenMaximoCm3): void
+    {
+        $this->volumenMaximoCm3 = max($this->volumenMinimoCm3, $volumenMaximoCm3);
+    }
+
     public function setPrecioBaseCentimos(int $precioBaseCentimos): void
     {
         $this->precioBaseCentimos = max(0, $precioBaseCentimos);
@@ -123,6 +219,17 @@ class ReglaTarifaTransportista
     public function setActiva(bool $activa): void
     {
         $this->activa = $activa;
+    }
+
+    public function aplicaA(float $distanciaKm, int $pesoTotalGramos, int $volumenTotalCm3): bool
+    {
+        return $this->activa
+            && $distanciaKm >= $this->distanciaMinimaKm
+            && $distanciaKm <= $this->distanciaMaximaKm
+            && $pesoTotalGramos >= $this->pesoMinimoGramos
+            && $pesoTotalGramos <= $this->pesoMaximoGramos
+            && $volumenTotalCm3 >= $this->volumenMinimoCm3
+            && $volumenTotalCm3 <= $this->volumenMaximoCm3;
     }
 
     public function calcularCosteCentimos(float $distanciaKm): int

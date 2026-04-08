@@ -19,14 +19,14 @@
                 <p>Vehiculo: {{ snapshot.nombreVehiculo }}</p>
             </article>
             <article>
-                <span>Importes</span>
+                <span>Cliente pagaria</span>
                 <strong>{{ snapshot.precioClienteCentimos|dinero }}</strong>
-                <p>Coste: {{ snapshot.costeLogisticoCentimos|dinero }}</p>
+                <p>Precio final presentado al cliente.</p>
             </article>
             <article>
-                <span>Margen</span>
-                <strong>{{ snapshot.margenCentimos|dinero }}</strong>
-                <p>Distancia: {{ snapshot.distanciaKm }} km</p>
+                <span>Ejecucion</span>
+                <strong>{{ snapshot.nombreVehiculo }}</strong>
+                <p>Coste interno: {{ snapshot.costeLogisticoCentimos|dinero }} · Distancia: {{ snapshot.distanciaKm }} km</p>
             </article>
         </div>
     </section>

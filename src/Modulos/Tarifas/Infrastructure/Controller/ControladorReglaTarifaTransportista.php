@@ -32,7 +32,7 @@ final class ControladorReglaTarifaTransportista extends AbstractController
     #[Route('/nueva', name: 'app_tarifas_transportista_nueva', methods: ['GET', 'POST'])]
     public function nueva(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->crearFormulario(new ReglaTarifaTransportista(null, null, 0, 0, 0));
+        $form = $this->crearFormulario(new ReglaTarifaTransportista(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0));
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -79,6 +79,12 @@ final class ControladorReglaTarifaTransportista extends AbstractController
         return $this->createFormBuilder($reglaTarifaTransportista)
             ->add('tipoVehiculo', EntityType::class, ['label' => 'Tipo de vehiculo', 'class' => TipoVehiculo::class, 'choice_label' => 'nombre'])
             ->add('nivelServicioEntrega', EntityType::class, ['label' => 'Nivel de servicio', 'class' => NivelServicioEntrega::class, 'choice_label' => 'nombre'])
+            ->add('distanciaMinimaKm', NumberType::class, ['label' => 'Distancia minima (km)', 'scale' => 2])
+            ->add('distanciaMaximaKm', NumberType::class, ['label' => 'Distancia maxima (km)', 'scale' => 2])
+            ->add('pesoMinimoGramos', IntegerType::class, ['label' => 'Peso minimo (g)'])
+            ->add('pesoMaximoGramos', IntegerType::class, ['label' => 'Peso maximo (g)'])
+            ->add('volumenMinimoCm3', IntegerType::class, ['label' => 'Volumen minimo (cm3)'])
+            ->add('volumenMaximoCm3', IntegerType::class, ['label' => 'Volumen maximo (cm3)'])
             ->add('precioBaseCentimos', IntegerType::class, ['label' => 'Precio base (centimos)'])
             ->add('distanciaIncluidaKm', NumberType::class, ['label' => 'Distancia incluida (km)', 'scale' => 2])
             ->add('precioKmExtraCentimos', IntegerType::class, ['label' => 'Precio por km extra (centimos)'])

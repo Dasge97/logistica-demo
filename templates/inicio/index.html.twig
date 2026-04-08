@@ -3,7 +3,7 @@
 {% block title %}Inicio | Logistica y Tarifas{% endblock %}
 
 {% block body %}
-    <section class="tarjeta">
+    <section class="tarjeta hero-panel">
         <p class="hero__eyebrow">Vista general</p>
         <h2>Panel operativo del motor logistico</h2>
         <p class="hero__texto">
@@ -26,6 +26,21 @@
                 <strong>{{ metricas.tiposCliente + metricas.nivelesServicio + metricas.tiposVehiculo }}</strong>
                 <p>Catalogos activos entre clientes, servicios y vehiculos.</p>
             </article>
+        </div>
+
+        <div class="estado-plataforma">
+            <div class="estado-plataforma__item">
+                <span class="estado-plataforma__punto estado-plataforma__punto--ok"></span>
+                Base operativa lista para demo
+            </div>
+            <div class="estado-plataforma__item">
+                <span class="estado-plataforma__punto estado-plataforma__punto--ok"></span>
+                Catalogos y reglas configurables
+            </div>
+            <div class="estado-plataforma__item">
+                <span class="estado-plataforma__punto estado-plataforma__punto--ok"></span>
+                Pedidos confirmables con snapshot
+            </div>
         </div>
     </section>
 

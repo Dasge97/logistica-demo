@@ -56,12 +56,18 @@ final class ResolutorOpcionesEntrega
                     continue;
                 }
 
-                $costeCentimos = $this->servicioCosteTransportista->calcularCosteCentimos($tipoVehiculo, $nivelServicio, $pedido->getDistanciaKm());
-                if (null === $costeCentimos) {
+                $resultadoCoste = $this->servicioCosteTransportista->resolverMejorCoste(
+                    $tipoVehiculo,
+                    $nivelServicio,
+                    $pedido->getDistanciaKm(),
+                    $pedido->getPesoTotalGramos(),
+                    $pedido->getVolumenTotalCm3(),
+                );
+                if (null === $resultadoCoste) {
                     continue;
                 }
 
-                $vehiculos[] = new ResultadoVehiculo($tipoVehiculo, $costeCentimos);
+                $vehiculos[] = new ResultadoVehiculo($tipoVehiculo, $resultadoCoste->costeCentimos, $resultadoCoste->reglaElegida);
             }
 
             if ([] === $vehiculos) {
@@ -69,11 +75,21 @@ final class ResolutorOpcionesEntrega
                 continue;
             }
 
+            $vehiculosRentables = array_values(array_filter(
+                $vehiculos,
+                static fn (ResultadoVehiculo $vehiculo): bool => $vehiculo->costeCentimos <= $precioClienteCentimos,
+            ));
+
+            if ([] === $vehiculosRentables) {
+                $descartes[] = new ResultadoDescarteServicio($nivelServicio, 'No hay vehiculos rentables para este precio cliente; el servicio no es comercialmente viable.');
+                continue;
+            }
+
             $opciones[] = new ResultadoOpcionEntrega(
                 $nivelServicio,
                 $precioClienteCentimos,
-                $vehiculos,
-                $this->selectorVehiculoOptimo->seleccionar($vehiculos),
+                $vehiculosRentables,
+                $this->selectorVehiculoOptimo->seleccionar($vehiculosRentables),
             );
         }
 

@@ -15,6 +15,12 @@
         {{ form_start(form, {attr: {class: 'formulario-grid'}}) }}
             {{ form_row(form.tipoVehiculo) }}
             {{ form_row(form.nivelServicioEntrega) }}
+            {{ form_row(form.distanciaMinimaKm) }}
+            {{ form_row(form.distanciaMaximaKm) }}
+            {{ form_row(form.pesoMinimoGramos) }}
+            {{ form_row(form.pesoMaximoGramos) }}
+            {{ form_row(form.volumenMinimoCm3) }}
+            {{ form_row(form.volumenMaximoCm3) }}
             {{ form_row(form.precioBaseCentimos) }}
             {{ form_row(form.distanciaIncluidaKm) }}
             {{ form_row(form.precioKmExtraCentimos) }}
